@@ -1,0 +1,48 @@
+# Environment files
+.env
+
+# Node.js modules
+/node_modules
+
+# Distribution files
+/dist
+
+# Public files
+/public
+
+# Logs and temporary files
+/logs
+*.log
+
+# Coverage reports
+/coverage
+
+# NYC output files
+/.nyc_output
+
+# macOS specific files
+.DS_Store
+
+# SQLite and temporary files
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+
+# Temporary files
+*.tmp
+*.swp
+
+# Node.js process ID files
+*.pid
+
+# Seed files
+*.seed
+
+# Miscellaneous temporary files (patterns for various temp files)
+*.tmp.*
+*.tmp.*.*
+*.tmp.*.*.*
+*.tmp.*.*.*.*
+*.tmp.*.*.*.*.*
+*.tmp.*.*.*.*.*.*
