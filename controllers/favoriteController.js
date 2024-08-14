@@ -1,5 +1,5 @@
 // src/controllers/favoriteController.js
-const asyncHandler = require("express-async-handler");
+const asyncHandler = require("../middlewares/asyncHandler");
 const Post = require("../models/Post");
 const User = require("../models/User");
 const ErrorResponse = require("../utils/errorResponse");

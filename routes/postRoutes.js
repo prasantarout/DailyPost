@@ -7,19 +7,20 @@ const {
   updatePost,
   deletePost,
   getPostsByCategory,
-  createPostByCategory,
+  recommendPosts,
 } = require("../controllers/postControllers");
-const {protect} = require("../middlewares/AuthMiddleware");
+const { protect } = require("../middlewares/AuthMiddleware");
 
 // Protect routes with authentication middleware
-router.post("/createPost",protect,createPost)
-router.get("/getAllPost",getAllPosts);
+router.post("/createPost", protect, createPost);
+router.get("/getAllPost", getAllPosts);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getPostById)
   .put(protect, updatePost)
   .delete(protect, deletePost);
 
 router.get("/getAllPost/:categoryId", getPostsByCategory);
-// router.get("/createPostByCategory", createPostByCategory);
+router.get("/getAll/recommended", recommendPosts);
 module.exports = router;

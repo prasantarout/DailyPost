@@ -1,4 +1,4 @@
-const asyncHandler = require("express-async-handler");
+const asyncHandler = require("../middlewares/asyncHandler");
 const Post = require("../models/Post");
 const User = require("../models/User");
 const Comment = require("../models/Comment");
@@ -156,5 +156,54 @@ exports.getPostsByCategory = asyncHandler(async (req, res, next) => {
       .json(successResponse("Posts retrieved successfully", 200, posts));
   } catch (error) {
     next(new ErrorResponse("Error retrieving posts", 500));
+  }
+});
+
+exports.recommendPosts = asyncHandler(async (req, res, next) => {
+  try {
+    let recommendedPosts;
+    // Option 1: Recommend posts based on user interaction (assume user is authenticated)
+    if (req.user) {
+      const userCategories = req.user.interestedCategories || [];
+      recommendedPosts = await Post.find({ category: { $in: userCategories } })
+        .populate("author", "name email")
+        .populate("category", "name")
+        .limit(10)
+        .sort({ createdAt: -1 }); // Sort by most recent
+    }
+    // Option 2: If no user interaction data, recommend trending posts
+    if (!recommendedPosts || recommendedPosts.length === 0) {
+      recommendedPosts = await Post.find()
+        .populate("author", "name email")
+        .populate("category", "name")
+        .limit(10)
+        .sort({ views: -1 }); // Sort by most viewed
+    }
+
+    // Option 3: If no trending posts, recommend recent posts
+    if (!recommendedPosts || recommendedPosts.length === 0) {
+      recommendedPosts = await Post.find()
+        .populate("author", "name email")
+        .populate("category", "name")
+        .limit(10)
+        .sort({ createdAt: -1 }); // Sort by most recent
+    }
+    if (recommendedPosts.length === 0) {
+      return next(
+        new ErrorResponse("No posts available for recommendation", 404)
+      );
+    }
+    console.log(recommendedPosts,">>>>>>>>>>>")
+    res
+      .status(200)
+      .json(
+        successResponse(
+          "Recommended posts retrieved successfully",
+          200,
+          recommendedPosts
+        )
+      );
+  } catch (error) {
+    next(new ErrorResponse("Error retrieving recommended posts", 500));
   }
 });
