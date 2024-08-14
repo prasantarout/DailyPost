@@ -1,7 +1,5 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../config");
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -14,9 +12,16 @@ const UserSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, required: true, default: false },
   createdAt: { type: Date, default: Date.now },
   posts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
-  profilePicture: String,
+  category: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
+  comment: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
+  profilePicture: { type: String },
   followedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
-  
+  favorites: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+    },
+  ],
 });
 
 // Encrypt password before saving

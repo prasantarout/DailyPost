@@ -37,8 +37,8 @@ exports.getCategoryById = asyncHandler(async (req, res, next) => {
     );
   }
   res
-  .status(201)
-  .json(successResponse("category fetched successfully", 201, category));
+  .status(200)
+  .json(successResponse("category fetched successfully", 200, category));
 });
 
 // Update a category by ID

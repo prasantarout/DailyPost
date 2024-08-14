@@ -7,12 +7,21 @@ const generateToken = require("../utils/generateToken");
 const successResponse = require("../utils/successResponse");
 const { sendOtpToUser } = require("../services/EmailServices");
 const { generateOtp } = require("../utils/otpGenerator");
-
+const Category = require("../models/Category");
+const { default: mongoose } = require("mongoose");
 // Register User
 exports.registerUser = asyncHandler(async (req, res, next) => {
-  const { name, email, password, confirmPassword, mobileNumber, address } =
-    req.body;
-
+  const {
+    name,
+    email,
+    password,
+    confirmPassword,
+    mobileNumber,
+    address,
+  } = req.body;
+  console.log("Request Body:", req.body); // Log request body
+  console.log("Uploaded File:", req.file);
+  const profilePicture = req.file ? req.file.path : null;
   if (
     !name ||
     !email ||
@@ -40,20 +49,22 @@ exports.registerUser = asyncHandler(async (req, res, next) => {
       password,
       mobileNumber,
       address,
+      profilePicture, // Add profilePicture here
     });
 
-    res.status(201).json(
-      successResponse("User registered successfully", 201, {
+    res.status(200).json(
+      successResponse("User registered successfully", 200, {
         _id: user._id,
         name: user.name,
         email: user.email,
         mobileNumber: user.mobileNumber,
         address: user.address,
+        profilePicture: user.profilePicture, 
         token: generateToken(user._id),
       })
     );
   } catch (error) {
-    next(error);
+    next(new ErrorResponse(error.message, 500));
   }
 });
 
@@ -162,12 +173,18 @@ exports.updateUserProfile = asyncHandler(async (req, res, next) => {
 
 exports.getUserProfile = asyncHandler(async (req, res, next) => {
   try {
+    // Find the user and populate the related fields
     const user = await User.findById(req.user.id)
-    .populate("posts") // This will populate the posts field with post data
-    .select("-password"); 
+      .populate("posts")
+      .populate("comment") // Populate comments
+      .populate("category") // Populate user's interested categories
+      .populate("followedPosts")
+      .select("-password");
+    // console.log("User object:", user);
     if (!user) {
       return next(new ErrorResponse("User not found", 404));
     }
+    const allCategories = await Category.find({});
     res.status(200).json(
       successResponse("Profile retrieved successfully", 200, {
         _id: user._id,
@@ -177,10 +194,49 @@ exports.getUserProfile = asyncHandler(async (req, res, next) => {
         address: user.address,
         profilePicture: user.profilePicture,
         posts: user.posts,
+        comments: user.comment,
+        interestedCategories: user.category,
+        followedPosts: user.followedPosts,
+        allCategories: allCategories,
       })
     );
   } catch (error) {
-    console.error("Error retrieving profile:", error); //
+    console.error("Error retrieving profile:", error);
     next(new ErrorResponse("Error retrieving profile", 500));
+  }
+});
+
+// server/controllers/userController.js
+exports.updateInterestedCategories = asyncHandler(async (req, res, next) => {
+  const { categoryIds } = req.body;
+
+  if (!categoryIds || !Array.isArray(categoryIds)) {
+    return next(new ErrorResponse("Invalid category IDs", 400));
+  }
+  try {
+    // Validate each category ID
+    for (const id of categoryIds) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return next(new ErrorResponse(`Invalid category ID: ${id}`, 400));
+      }
+    }
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return next(new ErrorResponse("User not found", 404));
+    }
+    user.category = categoryIds;
+    await user.save();
+    res
+      .status(200)
+      .json(
+        successResponse(
+          "Interested categories updated successfully",
+          200,
+          user.category
+        )
+      );
+  } catch (error) {
+    console.error("Error updating interested categories:", error);
+    next(new ErrorResponse("Error updating interested categories", 500));
   }
 });

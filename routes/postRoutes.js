@@ -6,6 +6,8 @@ const {
   getPostById,
   updatePost,
   deletePost,
+  getPostsByCategory,
+  createPostByCategory,
 } = require("../controllers/postControllers");
 const {protect} = require("../middlewares/AuthMiddleware");
 
@@ -18,4 +20,6 @@ router.route("/:id")
   .put(protect, updatePost)
   .delete(protect, deletePost);
 
+router.get("/getAllPost/:categoryId", getPostsByCategory);
+// router.get("/createPostByCategory", createPostByCategory);
 module.exports = router;

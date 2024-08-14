@@ -8,6 +8,7 @@ const {
   requestOtp,
   updateUserProfile,
   getUserProfile,
+  updateInterestedCategories,
 } = require("../controllers/authController");
 const {
   registerUserSchema,
@@ -18,11 +19,22 @@ const { protect } = require("../middlewares/AuthMiddleware");
 
 const router = express.Router();
 
-router.post("/register", validate(registerUserSchema), registerUser);
+router.post(
+  "/register",
+  // validate(registerUserSchema),
+  upload.single("profilePicture"),
+  registerUser
+);
 router.post("/login", validate(loginUserSchema), loginUser);
 router.post("/otpSend", requestOtp);
-router.put("/profile", protect,  upload.single("profilePicture"), updateUserProfile);
+router.put(
+  "/profile",
+  protect,
+  upload.single("profilePicture"),
+  updateUserProfile
+);
 router.get("/getProfile", protect, getUserProfile);
+router.post("/me/interested-categories", protect, updateInterestedCategories);
 router.post(
   "/upload-profile-picture",
   upload.single("profilePicture"),

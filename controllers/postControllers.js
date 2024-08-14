@@ -22,11 +22,14 @@ exports.createPost = asyncHandler(async (req, res, next) => {
       tags,
       category,
     });
+    await User.findByIdAndUpdate(req.user.id, {
+      $push: { posts: post._id },
+    });
     res
-      .status(201)
-      .json(successResponse("Post created successfully", 201, post));
+      .status(200)
+      .json(successResponse("Post created successfully", 200, post));
   } catch (error) {
-    next(error);
+    next(new ErrorResponse(error.message, 500));
   }
 });
 
@@ -42,7 +45,7 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
       .status(200)
       .json(successResponse("Posts retrieved successfully", 200, posts));
   } catch (error) {
-    next(error);
+    next(new ErrorResponse("Error retrieving posts", 500));
   }
 });
 
@@ -60,7 +63,7 @@ exports.getPostById = asyncHandler(async (req, res, next) => {
       .status(200)
       .json(successResponse("Post retrieved successfully", 200, post));
   } catch (error) {
-    next(error);
+    next(new ErrorResponse("Error retrieving post", 500));
   }
 });
 
@@ -77,25 +80,21 @@ exports.updatePost = asyncHandler(async (req, res, next) => {
     if (post.author.toString() !== req.user.id && !req.user.isAdmin) {
       return next(new ErrorResponse("Not authorized to update this post", 403));
     }
-
     post.title = title || post.title;
     post.content = content || post.content;
     post.images = images || post.images;
     post.videos = videos || post.videos;
     post.tags = tags || post.tags;
     post.category = category || post.category;
-
     await post.save();
-
     res
       .status(200)
       .json(successResponse("Post updated successfully", 200, post));
   } catch (error) {
-    next(error);
+    next(new ErrorResponse("Error updating post", 500));
   }
 });
 
-// Delete a post by ID
 exports.deletePost = asyncHandler(async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -105,9 +104,57 @@ exports.deletePost = asyncHandler(async (req, res, next) => {
     if (post.author.toString() !== req.user.id && !req.user.isAdmin) {
       return next(new ErrorResponse("Not authorized to delete this post", 403));
     }
-    await post.remove();
+    await post.deleteOne();
     res.status(200).json(successResponse("Post deleted successfully", 200));
   } catch (error) {
-    next(error);
+    next(new ErrorResponse("Error deleting post", 500));
+  }
+});
+
+// exports.createPostByCategory = asyncHandler(async (req, res, next) => {
+//   const { title, content, images, videos, tags, category } = req.body;
+//   try {
+//     const categoryExists = await Category.findById(category);
+//     if (!categoryExists) {
+//       return next(new ErrorResponse("Category not found", 404));
+//     }
+//     const post = await Post.create({
+//       title,
+//       content,
+//       author: req.user.id,
+//       images,
+//       videos,
+//       tags,
+//       category: categoryExists._id,
+//     });
+//     await User.findByIdAndUpdate(req.user.id, {
+//       $push: { posts: post._id },
+//     });
+//     res
+//       .status(200)
+//       .json(successResponse("Post created successfully", 200, post));
+//   } catch (error) {
+//     next(new ErrorResponse("Error creating post", 500));
+//   }
+// });
+
+exports.getPostsByCategory = asyncHandler(async (req, res, next) => {
+  const { categoryId } = req.params;
+  try {
+    // Check if the category exists
+    const categoryExists = await Category.findById(categoryId);
+    if (!categoryExists) {
+      return next(new ErrorResponse("Category not found", 404));
+    }
+    // Find posts that belong to the category
+    const posts = await Post.find({ category: categoryId })
+      .populate("author", "name email")
+      .populate("comments", "content")
+      .populate("category", "name");
+    res
+      .status(200)
+      .json(successResponse("Posts retrieved successfully", 200, posts));
+  } catch (error) {
+    next(new ErrorResponse("Error retrieving posts", 500));
   }
 });

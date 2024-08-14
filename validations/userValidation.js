@@ -31,6 +31,9 @@ const registerUserSchema = Joi.object({
     "string.min": "Address must be at least 5 characters long",
     "any.required": "Address is required",
   }),
+  profilePicture: Joi.string().uri().optional().messages({
+    "string.uri": "Profile picture must be a valid URL",
+  }),
 });
 
 // Schema for user login
