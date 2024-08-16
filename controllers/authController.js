@@ -179,12 +179,19 @@ exports.getUserProfile = asyncHandler(async (req, res, next) => {
       .populate("comment") // Populate comments
       .populate("category") // Populate user's interested categories
       .populate("followedPosts")
-      .select("-password");
+      .select("-password")
+      .populate("followers", "name email")
+      .populate("following", "name email")
     // console.log("User object:", user);
     if (!user) {
       return next(new ErrorResponse("User not found", 404));
     }
     const allCategories = await Category.find({});
+    const totalFollowCount = user.followers.length;
+    const followingUsers = user.following;
+    const likesCount = user.likedPosts.length;
+
+    
     res.status(200).json(
       successResponse("Profile retrieved successfully", 200, {
         _id: user._id,
@@ -198,6 +205,9 @@ exports.getUserProfile = asyncHandler(async (req, res, next) => {
         interestedCategories: user.category,
         followedPosts: user.followedPosts,
         allCategories: allCategories,
+        totalFollowCount: totalFollowCount,
+        followingUsers: followingUsers,
+        likesCount: likesCount,
       })
     );
   } catch (error) {
