@@ -11,14 +11,8 @@ const Category = require("../models/Category");
 const { default: mongoose } = require("mongoose");
 // Register User
 exports.registerUser = asyncHandler(async (req, res, next) => {
-  const {
-    name,
-    email,
-    password,
-    confirmPassword,
-    mobileNumber,
-    address,
-  } = req.body;
+  const { name, email, password, confirmPassword, mobileNumber, address } =
+    req.body;
   console.log("Request Body:", req.body); // Log request body
   console.log("Uploaded File:", req.file);
   const profilePicture = req.file ? req.file.path : null;
@@ -59,7 +53,7 @@ exports.registerUser = asyncHandler(async (req, res, next) => {
         email: user.email,
         mobileNumber: user.mobileNumber,
         address: user.address,
-        profilePicture: user.profilePicture, 
+        profilePicture: user.profilePicture,
         token: generateToken(user._id),
       })
     );
@@ -70,10 +64,16 @@ exports.registerUser = asyncHandler(async (req, res, next) => {
 
 // Login User
 exports.loginUser = async (req, res, next) => {
-  const { email, password } = req.body;
+  const { email, password, deviceToken } = req.body;
+
+  if (!deviceToken) {
+    return next(new ErrorResponse("Device token is required", 400));
+  }
   try {
     const user = await User.findOne({ email }).select("+password");
     if (user && (await user.matchPassword(password))) {
+      user.deviceToken = deviceToken;
+      await user.save();
       res.status(200).json(
         successResponse("User logged in successfully", 200, {
           _id: user._id,
@@ -181,7 +181,7 @@ exports.getUserProfile = asyncHandler(async (req, res, next) => {
       .populate("followedPosts")
       .select("-password")
       .populate("followers", "name email")
-      .populate("following", "name email")
+      .populate("following", "name email");
     // console.log("User object:", user);
     if (!user) {
       return next(new ErrorResponse("User not found", 404));
@@ -191,7 +191,6 @@ exports.getUserProfile = asyncHandler(async (req, res, next) => {
     const followingUsers = user.following;
     const likesCount = user.likedPosts.length;
 
-    
     res.status(200).json(
       successResponse("Profile retrieved successfully", 200, {
         _id: user._id,

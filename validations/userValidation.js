@@ -45,6 +45,9 @@ const loginUserSchema = Joi.object({
   password: Joi.string().required().messages({
     "any.required": "Password is required",
   }),
+  deviceToken: Joi.string().required().messages({
+    "any.required": "Device token is required",
+  }),
 });
 
 // Middleware to validate request body using Joi

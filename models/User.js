@@ -25,6 +25,7 @@ const UserSchema = new mongoose.Schema({
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],  
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],  
   likedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
+  deviceToken: { type: String },
 });
 
 // Encrypt password before saving

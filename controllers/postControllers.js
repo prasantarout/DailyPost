@@ -5,6 +5,8 @@ const Comment = require("../models/Comment");
 const Category = require("../models/Category");
 const ErrorResponse = require("../utils/errorResponse");
 const successResponse = require("../utils/successResponse");
+const PushNotificationService = require("../services/PushNotificationService");
+const Notification = require("../models/Notification");
 
 exports.createPost = asyncHandler(async (req, res, next) => {
   const { title, content, images, videos, tags, category } = req.body;
@@ -24,6 +26,28 @@ exports.createPost = asyncHandler(async (req, res, next) => {
     });
     await User.findByIdAndUpdate(req.user.id, {
       $push: { posts: post._id },
+    });
+
+    const user = await User.findById(req.user.id).populate("followers");
+    const notifications = user.followers.map((follower) => ({
+      recipient: follower._id,
+      sender: req.user.id,
+      post: post._id,
+      type: "new_post",
+      message: `${req.user.name} has posted something new.`,
+    }));
+    try {
+      await Notification.insertMany(notifications);
+    } catch (error) {
+      console.error("Error saving notifications:", error);
+      return next(new ErrorResponse("Failed to save notifications", 500));
+    }
+    user.followers.forEach((follower) => {
+      PushNotificationService.send({
+        to: follower.deviceToken,
+        title: "New Post!",
+        body: `${req.user.name} has posted something new.`,
+      });
     });
     res
       .status(200)
@@ -193,7 +217,7 @@ exports.recommendPosts = asyncHandler(async (req, res, next) => {
         new ErrorResponse("No posts available for recommendation", 404)
       );
     }
-    console.log(recommendedPosts,">>>>>>>>>>>")
+    // console.log(recommendedPosts,">>>>>>>>>>>")
     res
       .status(200)
       .json(
